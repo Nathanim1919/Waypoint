@@ -11,13 +11,28 @@ services:
     volumes:
       - waypoint-db:/var/lib/postgresql/data
     healthcheck:
-        # The actual command Docker executes INSIDE the container
-        test: ["CMD-SHELL", "pg_isready -U waypoint -d waypoint"]
-        interval: 10s   # Run the test every 10 seconds
-        timeout: 5s     # Fail if the command takes longer than 5 seconds
-        retries: 5      # Mark 'unhealthy' after 5 consecutive failures
-        start_period: 10s # Grace period for the DB to boot up initially
+      # The actual command Docker executes INSIDE the container
+      test: ["CMD-SHELL", "pg_isready -U waypoint -d waypoint"]
+      interval: 10s # Run the test every 10 seconds
+      timeout: 5s # Fail if the command takes longer than 5 seconds
+      retries: 5 # Mark 'unhealthy' after 5 consecutive failures
+      start_period: 10s # Grace period for the DB to boot up initially
+  redis:
+    image: redis:7-alpine
+    container_name: waypoint_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - waypoint-redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
 volumes:
   waypoint-db:
+    driver: local
+  waypoint-redis:
     driver: local
