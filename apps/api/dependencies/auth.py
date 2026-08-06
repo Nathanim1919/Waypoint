@@ -3,7 +3,7 @@ from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError
 from sqlalchemy.orm import Session
 
-from core.security import decode_access_token
+from core.security import decode_token
 from dependencies.db import get_db
 from models.user import User
 
@@ -21,9 +21,17 @@ def get_current_user(
     )
 
     try:
-        user_id = decode_access_token(token)
+        payload = decode_token(token)
     except JWTError:
         raise credentials_exception
+
+    if payload.get("type") != "access":
+        raise credentials_exception
+    
+    user_id = payload.get("sub")
+    if not user_id:
+        raise credentials_exception
+    
 
     user = db.query(User).filter(User.id == user_id).first()
     if user is None:
