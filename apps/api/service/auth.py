@@ -9,7 +9,6 @@ from sqlalchemy.orm import Session
 from apps.api.schemas.user import UserCreate
 
 
-
 def issues_session(user: User) -> tuple[str, str]:
     """Issues a new access and refresh token for the given user."""
     session_id = str(uuid.uuid4())
@@ -50,8 +49,14 @@ def register(db: Session, data: UserCreate) -> User:
     return user, access_token, refresh_token
     
 
-def login():
-    pass
+def login(db: Session, email: str, password: str) -> tuple[User, str, str]:
+    user = db.query(User).filter(User.email == email).first()
+    if not user:
+        raise ValueError("Invalid email or password")
+    if not hash_password(password) == user.password:
+        raise ValueError("Invalid email or password")
+    access_token, refresh_token = issues_session(user)
+    return user, access_token, refresh_token
 
 def logout():
      pass

@@ -19,3 +19,9 @@ class UserOut(BaseModel):
 
     class Config:
         from_attributes = True
+        
+        
+        
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
