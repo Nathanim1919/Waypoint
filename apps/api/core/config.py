@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     redis_url: str
 
     # jwt
+    environment: str
     secret_key: str
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 30

@@ -2,11 +2,11 @@ from sqlite3 import IntegrityError
 import uuid
 from datetime import datetime, timedelta, timezone
 from apps.api.models.user import User
-from core.config import settings
-from core.security import create_access_token, create_refresh_token, hash_password, hash_token
-from core.redis_client import redis_client
+from apps.api.core.security import create_access_token, create_refresh_token, hash_password, hash_token
+from apps.api.core.redis_client import redis_client
+from apps.api.core.config import settings
 from sqlalchemy.orm import Session
-from schemas.user import UserCreate
+from apps.api.schemas.user import UserCreate
 
 
 
@@ -27,7 +27,7 @@ def issues_session(user: User) -> tuple[str, str]:
     return access_token, refresh_token
 
 def register(db: Session, data: UserCreate) -> User:
-    exisit = db.query(User).filter((User.username == user.username) | (User.email == user.email)).first()
+    exisit = db.query(User).filter((User.username == data.username) | (User.email == data.email)).first()
     if exisit:
         raise ValueError("Username or email already exists")
     
@@ -35,7 +35,7 @@ def register(db: Session, data: UserCreate) -> User:
         name = data.name,
         username = data.username,
         email = data.email,
-        hashed_password=hash_password(data.password),
+        password=hash_password(data.password),
     )
     
     db.add(user)
