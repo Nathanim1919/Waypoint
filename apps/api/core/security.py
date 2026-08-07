@@ -1,5 +1,6 @@
 import hashlib
-from jose import jwt, JWTError
+import hmac
+from jose import jwt
 from .config import settings
 from datetime import datetime, timedelta, timezone
 import bcrypt
@@ -38,3 +39,6 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
         plain_password.encode('utf-8'), 
         hashed_password.encode('utf-8')
     )
+    
+def verify_token_hash(token: str, hashed: str) -> bool:
+    return hmac.compare_digest(hash_token(token), hashed)
