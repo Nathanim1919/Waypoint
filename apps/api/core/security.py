@@ -7,10 +7,9 @@ import bcrypt
 
 
 
-def decode_token(token: str) -> str:
+def decode_token(token: str) -> dict[str, any]:
     """Returns the user id (sub claim). Raises JWTError on any failure."""
-    payload = jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
-    return payload["sub"]
+    return jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
 
 
 def create_access_token(subject: str) -> str:
@@ -35,10 +34,13 @@ def hash_password(password: str) -> str:
     return bcrypt.hashpw(pwd_bytes, salt).decode('utf-8')
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return bcrypt.checkpw(
-        plain_password.encode('utf-8'), 
-        hashed_password.encode('utf-8')
-    )
-    
+    try:
+        return bcrypt.checkpw(
+            plain_password.encode('utf-8'), 
+            hashed_password.encode('utf-8')
+        )
+    except Exception:
+        return False
+
 def verify_token_hash(token: str, hashed: str) -> bool:
     return hmac.compare_digest(hash_token(token), hashed)

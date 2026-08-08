@@ -1,7 +1,9 @@
 from fastapi import APIRouter, HTTPException, Request, Response
 from fastapi.params import Depends
 from pydantic import BaseModel
+from apps.api.dependencies.auth import get_current_user
 from apps.api.dependencies.db import get_db
+from apps.api.models.user import User
 from apps.api.schemas.user import UserLogin, UserOut, UserCreate
 from apps.api.service.auth import register as register_user, login as login_user, logout as logout_user, refresh as refresh_user
 from sqlalchemy.orm import Session
@@ -17,6 +19,17 @@ class LoginResponse(BaseModel):
     user: UserOut
     access_token: str
     refresh_token: str
+    
+def set_auth_cookies(response: Response, access_token: str, refresh_token: str) -> None:
+    response.set_cookie(key="access_token", value=access_token, httponly=True,
+                         secure=settings.environment != "local", samesite="lax", max_age=60 * 30)
+    response.set_cookie(key="refresh_token", value=refresh_token, httponly=True,
+                         secure=settings.environment != "local", samesite="lax",
+                         max_age=60 * 60 * 24 * 7, path="/auth")
+    
+@router.get("/me", response_model=UserOut, status_code=200)
+def get_current_user_info(current_user: User = Depends(get_current_user)):
+    return current_user
 
 
 @router.post("/login", response_model=LoginResponse, status_code=200)
@@ -26,24 +39,7 @@ def login(payload: UserLogin, response: Response, db: Session = Depends(get_db))
     except ValueError as e:
         raise HTTPException(status_code=401, detail=str(e))
     
-    response.set_cookie(
-        key="access_token",
-        value=access_token,
-        httponly=True,
-        secure=settings.environment != "local",
-        samesite="lax",
-        max_age=60 * 30, 
-    )
-    
-    response.set_cookie(
-        key="refresh_token",
-        value=refresh_token,
-        httponly=True,
-        secure=settings.environment != "local",
-        samesite="lax",
-        max_age=60 * 60 * 24 * 7,
-        path="/auth",       # narrower scope — see note below
-    )
+    set_auth_cookies(response, access_token, refresh_token)
     
     return {"user": user, "access_token": access_token, "refresh_token": refresh_token}
 
@@ -59,24 +55,7 @@ def register(
     except ValueError as e:
         raise HTTPException(status_code=409, detail=str(e))
     
-    response.set_cookie(
-        key="access_token",
-        value=access_token,
-        httponly=True,
-      secure=settings.environment != "local",
-        samesite="lax",
-        max_age=60 * 30, 
-    )
-    
-    response.set_cookie(
-        key="refresh_token",
-        value=refresh_token,
-        httponly=True,
-      secure=settings.environment != "local",
-        samesite="lax",
-        max_age=60 * 60 * 24 * 7,
-        path="/auth",       # narrower scope — see note below
-    )
+    set_auth_cookies(response, access_token, refresh_token)
     
     return user
 
@@ -85,7 +64,6 @@ def register(
 def logout(request: Request, response: Response):
     
     refresh_token = request.cookies.get("refresh_token")
-    print("refresh_token", refresh_token)
     logout_user(refresh_token)
     
     response.delete_cookie("access_token")
@@ -105,23 +83,6 @@ def refresh(request: Request, response: Response, db: Session = Depends(get_db))
     except ValueError as e:
         raise HTTPException(status_code=401, detail=str(e))
 
-    response.set_cookie(
-        key="access_token",
-        value=access_token,
-        httponly=True,
-        secure=settings.environment != "local",
-        samesite="lax",
-        max_age=60 * 30,
-    )
-
-    response.set_cookie(
-        key="refresh_token",
-        value=refresh_token,
-        httponly=True,
-        secure=settings.environment != "local",
-        samesite="lax",
-        max_age=60 * 60 * 24 * 7,
-        path="/auth",
-    )
+    set_auth_cookies(response, access_token, refresh_token)
 
     return user

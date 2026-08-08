@@ -3,9 +3,9 @@ from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError
 from sqlalchemy.orm import Session
 
-from core.security import decode_token
-from dependencies.db import get_db
-from models.user import User
+from apps.api.core.security import decode_token
+from apps.api.dependencies.db import get_db
+from apps.api.models.user import User
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
@@ -22,6 +22,7 @@ def get_current_user(
 
     try:
         payload = decode_token(token)
+        print("Decoded payload:", payload)  # Debugging line
     except JWTError:
         raise credentials_exception
 
