@@ -18,6 +18,12 @@ def create_access_token(subject: str) -> str:
     return jwt.encode(payload, settings.secret_key, algorithm=settings.algorithm)
 
 
+def create_invite_token(org_id: str, role: str) -> str:
+    expire = datetime.now(timezone.utc) + timedelta(days=settings.invite_token_expire_days)
+    payload = {"org_id": org_id, "role": role, "exp": expire, "type": "invite"}
+    return jwt.encode(payload, settings.secret_key, algorithm=settings.algorithm)
+
+
 def create_refresh_token(subject: str, session_id: str) -> str:
     expire = datetime.now(timezone.utc) + timedelta(days=settings.refresh_token_expire_days)
     payload = {"sub": subject, "sid": session_id, "exp": expire, "type": "refresh"}

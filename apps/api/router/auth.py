@@ -14,15 +14,11 @@ router = APIRouter(
     prefix="/auth",
     tags=["auth"]
 )
-
-class LoginResponse(BaseModel):
-    user: UserOut
-    access_token: str
-    refresh_token: str
     
 def set_auth_cookies(response: Response, access_token: str, refresh_token: str) -> None:
     response.set_cookie(key="access_token", value=access_token, httponly=True,
-                         secure=settings.environment != "local", samesite="lax", max_age=60 * 30)
+                         secure=settings.environment != "local", samesite="lax",
+                         max_age=60 * 30, path="/")
     response.set_cookie(key="refresh_token", value=refresh_token, httponly=True,
                          secure=settings.environment != "local", samesite="lax",
                          max_age=60 * 60 * 24 * 7, path="/auth")
@@ -32,7 +28,7 @@ def get_current_user_info(current_user: User = Depends(get_current_user)):
     return current_user
 
 
-@router.post("/login", response_model=LoginResponse, status_code=200)
+@router.post("/login", response_model=UserOut, status_code=200)
 def login(payload: UserLogin, response: Response, db: Session = Depends(get_db)):
     try:
         user, access_token, refresh_token = login_user(db, payload.email, payload.password)
@@ -41,7 +37,7 @@ def login(payload: UserLogin, response: Response, db: Session = Depends(get_db))
     
     set_auth_cookies(response, access_token, refresh_token)
     
-    return {"user": user, "access_token": access_token, "refresh_token": refresh_token}
+    return user
 
 
 @router.post("/register", response_model=UserOut, status_code=201)

@@ -14,6 +14,7 @@ class InvitationOut(BaseModel):
     email: str
     invited_role: OrgRole
     status: InvitationStatus
+    expires_at: datetime
     created_at: datetime
 
     class Config:

@@ -22,6 +22,7 @@ class Invitation(Base):
     status: Mapped[InvitationStatus] = mapped_column(
         invitation_status_enum, nullable=False, default=InvitationStatus.PENDING
     )
+    expires_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=False)
     created_by: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id"), nullable=False
     )
